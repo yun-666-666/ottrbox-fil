@@ -50,7 +50,7 @@ http://localhost:3000
 The default compose file uses the Docker Hub image:
 
 ```text
-yun666666/ottrbox-fil:latest
+yunmengdocker/ottrbox-fil:latest
 ```
 
 ## Build Locally
