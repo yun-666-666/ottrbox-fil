@@ -1,6 +1,6 @@
 services:
   ottrbox:
-    image: yun666666/ottrbox-fil:latest
+    image: yunmengdocker/ottrbox-fil:latest
     restart: unless-stopped
     ports:
       - 3000:3000
