@@ -53,6 +53,25 @@ The default compose file uses the Docker Hub image:
 yunmengdocker/ottrbox-fil:latest
 ```
 
+## Reverse Proxy Deployment
+
+If you run OttrBox Fil behind Nginx, OpenResty, Caddy, Cloudflare, or a control
+panel reverse proxy, use the reverse proxy compose example:
+
+```bash
+docker compose -f docker-compose.reverse-proxy.yml up -d
+```
+
+That file binds the app to `127.0.0.1:9970` on the host and sets
+`TRUST_PROXY=true`. Point your reverse proxy to:
+
+```text
+http://127.0.0.1:9970
+```
+
+Do not expose the host port publicly unless you intentionally want direct
+access without the reverse proxy.
+
 ## Build Locally
 
 To build from this source tree instead of pulling the published image:
@@ -72,6 +91,14 @@ http://localhost:3001
 Open the web UI and register the first user as prompted. If you want users to
 create shares without logging in, enable anonymous sharing in the OttrBox admin
 configuration.
+
+## Low Resource VPS Notes
+
+Small VPS instances should pull the published Docker Hub image instead of
+building the production image on the server. Building the frontend and backend
+locally can keep a 1 vCPU server busy for a long time and may require more disk
+space than is available. Build on a local machine or CI, push the image, then
+run `docker compose pull` and `docker compose up -d` on the VPS.
 
 ## Notes
 
