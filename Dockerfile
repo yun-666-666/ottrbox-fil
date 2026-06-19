@@ -63,7 +63,7 @@ COPY ./scripts/docker ./scripts/docker
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=10s --timeout=3s CMD sh -c \
+HEALTHCHECK --interval=10s --timeout=3s --start-period=90s CMD sh -c \
     '[ "$CADDY_DISABLED" = "true" ] && curl -fs http://localhost:$BACKEND_PORT/api/health || curl -fs http://localhost:3000/api/health || exit 1'
 
 ENTRYPOINT ["sh", "./scripts/docker/create-user.sh"]

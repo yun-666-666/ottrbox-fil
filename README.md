@@ -100,6 +100,11 @@ locally can keep a 1 vCPU server busy for a long time and may require more disk
 space than is available. Build on a local machine or CI, push the image, then
 run `docker compose pull` and `docker compose up -d` on the VPS.
 
+After pulling a fixed published image, use `docker-compose.yml` or
+`docker-compose.reverse-proxy.yml` directly. Runtime-install compose overrides
+that install Prisma during container startup should only be used as temporary
+recovery files and can be removed once the new image is healthy.
+
 ## Notes
 
 - The passcode is the existing share ID.
