@@ -1,0 +1,91 @@
+name: Build and Deploy to VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to build and deploy"
+        required: false
+        default: "vps-latest"
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ottrbox-text-passcode
+  CONTAINER_NAME: ottrbox-text-passcode
+  DEPLOY_DIR: /opt/ottrbox-text-passcode
+  DATA_DIR: /opt/ottrbox-text-passcode-data
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image archive
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.inputs.image_tag }}"
+          docker buildx build \
+            --platform linux/amd64 \
+            --tag "${IMAGE_NAME}:${TAG}" \
+            --load \
+            .
+          docker save "${IMAGE_NAME}:${TAG}" | gzip > image.tar.gz
+          ls -lh image.tar.gz
+
+      - name: Prepare SSH key
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+          ssh-keyscan -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload image archive
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/vps_key \
+            -P "${{ secrets.VPS_PORT }}" \
+            image.tar.gz \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/${CONTAINER_NAME}.tar.gz"
+
+      - name: Load and restart container
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.inputs.image_tag }}"
+          ssh -i ~/.ssh/vps_key \
+            -p "${{ secrets.VPS_PORT }}" \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "IMAGE_NAME='${IMAGE_NAME}' CONTAINER_NAME='${CONTAINER_NAME}' TAG='${TAG}' DEPLOY_DIR='${DEPLOY_DIR}' DATA_DIR='${DATA_DIR}' bash -s" <<'REMOTE'
+          set -euo pipefail
+          mkdir -p "$DEPLOY_DIR" "$DATA_DIR/images"
+          docker load -i "/tmp/${CONTAINER_NAME}.tar.gz"
+          docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+          docker run -d \
+            --name "$CONTAINER_NAME" \
+            --restart unless-stopped \
+            -p 127.0.0.1:9000:3000 \
+            -e TRUST_PROXY=true \
+            -v "${DATA_DIR}:/opt/app/backend/data" \
+            -v "${DATA_DIR}/images:/opt/app/frontend/public/img" \
+            "${IMAGE_NAME}:${TAG}"
+          docker ps --filter "name=${CONTAINER_NAME}"
+          docker logs --tail 80 "$CONTAINER_NAME"
+          REMOTE
+
+      - name: Verify local health from VPS
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/vps_key \
+            -p "${{ secrets.VPS_PORT }}" \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "curl -fsS http://127.0.0.1:9000/api/health"
