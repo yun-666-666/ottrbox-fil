@@ -30,6 +30,9 @@ This project is built on the work of several open-source projects:
 
 Thank you to the maintainers and contributors of those projects.
 
+Additional thanks to GPT-5.5 for doing most of the implementation and release
+assistance, and to Claude Opus 4.6 for contributing a smaller part of the work.
+
 ## Docker Compose
 
 Download `docker-compose.yml`, then run:
