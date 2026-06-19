@@ -33,13 +33,28 @@ Thank you to the maintainers and contributors of those projects.
 Additional thanks to GPT-5.5 for doing most of the implementation and release
 assistance, and to Claude Opus 4.6 for contributing a smaller part of the work.
 
-## Docker Compose
+## Docker Deployment
 
-Download `docker-compose.yml`, then run:
+The recommended deployment path is Docker Compose with the published Docker Hub
+image:
+
+```text
+yunmengdocker/ottrbox-fil:latest
+```
+
+### Quick Start
+
+Install Docker Engine with the Compose plugin on your server, clone this
+repository, and start the container:
 
 ```bash
+git clone https://github.com/yun-666-666/ottrbox-fil.git
+cd ottrbox-fil
 docker compose up -d
 ```
+
+Docker Compose will pull `yunmengdocker/ottrbox-fil:latest` and create the local
+`data` directory for persistent database, upload, and image data.
 
 The service listens on:
 
@@ -47,11 +62,29 @@ The service listens on:
 http://localhost:3000
 ```
 
-The default compose file uses the Docker Hub image:
+Verify the container and health endpoint:
+
+```bash
+docker compose ps
+curl -i http://127.0.0.1:3000/api/health
+```
+
+Expected health response:
 
 ```text
-yunmengdocker/ottrbox-fil:latest
+HTTP/1.1 200 OK
+OK
 ```
+
+Keep the generated `data` directory. It contains the SQLite database and user
+uploads:
+
+```text
+./data:/opt/app/backend/data
+./data/images:/opt/app/frontend/public/img
+```
+
+Back up `./data` before updating, moving servers, or changing compose files.
 
 ## Reverse Proxy Deployment
 
@@ -71,6 +104,48 @@ http://127.0.0.1:9970
 
 Do not expose the host port publicly unless you intentionally want direct
 access without the reverse proxy.
+
+After starting the reverse-proxy compose file, verify locally:
+
+```bash
+docker compose -f docker-compose.reverse-proxy.yml ps
+curl -i http://127.0.0.1:9970/api/health
+```
+
+Then verify through your public domain:
+
+```bash
+curl -i https://your-domain.example/api/health
+```
+
+If you proxy large uploads, configure your reverse proxy with a large enough
+request body limit and long enough read/send timeouts.
+
+## Updating A Docker Deployment
+
+From the deployment directory:
+
+```bash
+git fetch origin main --prune
+git reset --hard origin/main
+docker compose pull
+docker compose up -d
+docker compose ps
+```
+
+For reverse-proxy deployments, use the same compose file consistently:
+
+```bash
+git fetch origin main --prune
+git reset --hard origin/main
+docker compose -f docker-compose.reverse-proxy.yml pull
+docker compose -f docker-compose.reverse-proxy.yml up -d
+docker compose -f docker-compose.reverse-proxy.yml ps
+```
+
+During first startup or after an update, the container may need time to run
+Prisma migrations and seed configuration. The Docker healthcheck includes a
+startup grace period for that work.
 
 ## Build Locally
 
