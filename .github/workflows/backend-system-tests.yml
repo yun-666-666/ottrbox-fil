@@ -14,10 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     container: node:22
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
       - name: Install Dependencies
         working-directory: ./backend
-        run: npm install
+        run: pnpm install --frozen-lockfile
       - name: Run Server and Test with Newman
         working-directory: ./backend
-        run: npm run test:system
+        run: pnpm run test:system
