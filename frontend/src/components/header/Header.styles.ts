@@ -5,7 +5,7 @@ export const HEADER_HEIGHT = 60;
 export const useStyles = createStyles((theme) => ({
   root: {
     position: "relative",
-    zIndex: 1,
+    zIndex: 1000,
   },
 
   dropdown: {
@@ -13,7 +13,7 @@ export const useStyles = createStyles((theme) => ({
     top: HEADER_HEIGHT,
     left: 0,
     right: 0,
-    zIndex: 0,
+    zIndex: 1001,
     borderTopRightRadius: 0,
     borderTopLeftRadius: 0,
     borderTop: "none !important",
@@ -40,7 +40,7 @@ export const useStyles = createStyles((theme) => ({
   withIcon: {
     display: "flex",
     alignItems: "center",
-    gap: '0.3rem',
+    gap: "0.3rem",
   },
 
   link: {
@@ -66,14 +66,14 @@ export const useStyles = createStyles((theme) => ({
     },
 
     "&:active": {
-      transform: 'translateY(1px)',
+      transform: "translateY(1px)",
     },
 
     [theme.fn.smallerThan("sm")]: {
       borderRadius: 0,
       padding: theme.spacing.md,
       "&:active": {
-        transform: 'none',
+        transform: "none",
       },
     },
   },
