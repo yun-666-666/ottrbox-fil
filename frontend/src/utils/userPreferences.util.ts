@@ -9,20 +9,39 @@ const defaultPreferences = [
   },
 ];
 
-const get = (key: string) => {
-  if (typeof window !== "undefined") {
-    const preferences = JSON.parse(localStorage.getItem("preferences") ?? "{}");
-    return (
-      preferences[key] ??
-      defaultPreferences.find((p) => p.key == key)?.value ??
-      null
-    );
+const getDefaultPreference = (key: string) =>
+  defaultPreferences.find((preference) => preference.key === key)?.value ?? null;
+
+const readPreferences = () => {
+  if (typeof window === "undefined") {
+    return {};
   }
+
+  const rawPreferences = localStorage.getItem("preferences");
+  if (!rawPreferences) {
+    return {};
+  }
+
+  try {
+    const parsedPreferences = JSON.parse(rawPreferences);
+    if (parsedPreferences && typeof parsedPreferences === "object") {
+      return parsedPreferences as Record<string, string>;
+    }
+  } catch {
+    localStorage.removeItem("preferences");
+  }
+
+  return {};
+};
+
+const get = (key: string) => {
+  const preferences = readPreferences();
+  return preferences[key] ?? getDefaultPreference(key);
 };
 
 const set = (key: string, value: string) => {
   if (typeof window !== "undefined") {
-    const preferences = JSON.parse(localStorage.getItem("preferences") ?? "{}");
+    const preferences = readPreferences();
     preferences[key] = value;
     localStorage.setItem("preferences", JSON.stringify(preferences));
   }

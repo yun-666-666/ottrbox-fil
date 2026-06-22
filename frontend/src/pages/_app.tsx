@@ -78,10 +78,10 @@ function App({ Component, pageProps }: AppProps) {
   }, []);
 
   useEffect(() => {
-    const colorScheme =
+    const colorScheme: ColorScheme =
       userPreferences.get("colorScheme") == "system"
         ? systemTheme
-        : userPreferences.get("colorScheme");
+        : (userPreferences.get("colorScheme") as ColorScheme);
 
     toggleColorScheme(colorScheme);
   }, [systemTheme]);
